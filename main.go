@@ -2,9 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"strconv"
-	//"fmt"
 	"log"
+	"strconv"
 	"time"
 )
 
@@ -55,7 +54,7 @@ func fetchDataAndSave() error {
 	}
 
 	// 문자열 형태의 토큰 가격을 실수로 변환
-	tokenPrice, err := strconv.ParseFloat(priceInfo.LastPrice, 64)
+	tokenPrice, err = strconv.ParseFloat(priceInfo.LastPrice, 64)
 	if err != nil {
 		return err
 	}

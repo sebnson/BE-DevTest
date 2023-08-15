@@ -6,14 +6,13 @@ import (
 	"net/http"
 )
 
-//API 서버 시작
+// API 서버 시작
 func startAPIServer() {
 	http.HandleFunc("/token/price", handleTokenPriceRequest)
-	http.HandleFunc("/averageTokenPrice", getAverageTokenPrice)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-//토큰 가격 정보 반환
+// 토큰 가격 정보 반환
 func handleTokenPriceRequest(w http.ResponseWriter, r *http.Request) {
 	// 요청 파라미터에서 토큰 심볼을 읽기 (예: /token/price?symbol=USDT)
 	tokenSymbol := r.URL.Query().Get("symbol")

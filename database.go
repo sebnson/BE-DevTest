@@ -3,14 +3,13 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"time"
-	_ "github.com/go-sql-driver/mysql"
 
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
-	dbUsername = "mysql_username"
+	dbUser     = "mysql_username"
 	dbPassword = "mysql_password"
 	dbName     = "database_name"
 )
@@ -25,8 +24,7 @@ func connectToDB() (*sql.DB, error) {
 	return db, nil
 }
 
-
-func saveTokenPrice(tokenSymbol string, price float64) error {
+func saveTokenPrice(tokenSymbol string, tokenPrice float64) error {
 	db, err := connectToDB()
 	if err != nil {
 		return err
@@ -37,7 +35,7 @@ func saveTokenPrice(tokenSymbol string, price float64) error {
 	query := "INSERT INTO token_prices (symbol, price, timestamp) VALUES (?, ?, ?)"
 	_, err = db.Exec(query, tokenSymbol, tokenPrice, time.Now())
 	if err != nil {
-		return err 
+		return err
 	}
 
 	return nil
@@ -66,7 +64,7 @@ func getTokenPrice(tokenSymbol string) (float64, error) {
 }
 
 // 특정 시간 구간 동안의 평균 토큰 가격 정보 조회
-func getAverageTokenPrice(tokenSymbol, source string, startTime, endTime time.Time)(float64, error){
+func getAverageTokenPrice(tokenSymbol, source string, startTime, endTime time.Time) (float64, error) {
 	db, err := connectToDB()
 	if err != nil {
 		return 0, err

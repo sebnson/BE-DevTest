@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"math/big"
+	"strings"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -20,31 +20,39 @@ func getLatestTokenData() (float64, error) {
 		return 0, err
 	}
 
-	parsedABI, err := abi.JSON(bytes.NewReader(chainlinkABI))
+	parsedABI, err := abi.JSON(strings.NewReader(string(chainlinkABI)))
 	if err != nil {
 		return 0, err
 	}
 
-	data, err := client.CallContract(nil, ethereum.CallMsg{
+	// latestRoundData() 함수 호출용 데이터 생성
+	data, err := parsedABI.Pack("latestRoundData")
+	if err != nil {
+		return 0, err
+	}
+
+	callMsg := ethereum.CallMsg{
 		To:   &chainlinkAddress,
-		Data: parsedABI.Pack("latestRoundData"), // latestRoundData() 함수 호출
-	}, nil)
+		Data: data,
+	}
+
+	result, err := client.CallContract(nil, callMsg, nil)
 	if err != nil {
 		return 0, err
 	}
 
 	// 데이터 파싱 및 가격 리턴
-	price, _, err := parseTokenPriceData(data)
+	tokenPrice, _, err := parseTokenPriceData(result)
 	if err != nil {
 		return 0, err
 	}
 
-	return price, nil
+	return tokenPrice, nil
 }
 
 func parseTokenPriceData(data []byte) (float64, int64, error) {
 	// Chainlink 컨트랙트 latestRoundData() 함수의 반환값 파싱
-	parsedABI, err := abi.JSON(bytes.NewReader(chainlinkABI))
+	parsedABI, err := abi.JSON(strings.NewReader(string(chainlinkABI)))
 	if err != nil {
 		return 0, 0, err
 	}
@@ -60,10 +68,10 @@ func parseTokenPriceData(data []byte) (float64, int64, error) {
 	}
 
 	// uint80 타입인 answer를 float64로 변환하여 가격 리턴
-	price := new(big.Float).SetInt(roundData.Answer).Float64()
+	tokenPrice, _ := new(big.Float).SetInt(roundData.Answer).Float64()
 
 	// updatedAt 값을 int64로 변환하여 타임스탬프 리턴
 	updatedAt := roundData.UpdatedAt.Int64()
 
-	return price, updatedAt, nil
+	return tokenPrice, updatedAt, nil
 }
