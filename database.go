@@ -24,7 +24,7 @@ func connectToDB() (*sql.DB, error) {
 	return db, nil
 }
 
-func saveTokenPrice(tokenSymbol string, tokenPrice float64) error {
+func saveTokenPrice(tokenSymbol string, chainlinkPrice, bitfinexPrice float64) error {
 	db, err := connectToDB()
 	if err != nil {
 		return err
@@ -32,8 +32,8 @@ func saveTokenPrice(tokenSymbol string, tokenPrice float64) error {
 	defer db.Close()
 
 	// 데이터베이스에 토큰 가격 정보 저장
-	query := "INSERT INTO token_prices (symbol, price, timestamp) VALUES (?, ?, ?)"
-	_, err = db.Exec(query, tokenSymbol, tokenPrice, time.Now())
+	query := "INSERT INTO token_prices (symbol, chainlink_price, bitfinex_price, timestamp) VALUES (?, ?, ?, ?)"
+	_, err = db.Exec(query, tokenSymbol, chainlinkPrice, bitfinexPrice, time.Now())
 	if err != nil {
 		return err
 	}
