@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"math/big"
+	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum"
@@ -21,7 +22,14 @@ var chainlinkAddress = []common.Address{
 }
 
 func init() {
-	chainlinkABI, err = abi.JSON(strings.NewReader("ChainLink.JSON"))
+	// ChainLink.json에서 ABI 읽어오기
+	abiContent, err := os.ReadFile("ChainLink.json")
+	if err != nil {
+		log.Fatalf("Failed to read ABI file: %v", err)
+	}
+
+	// ABI 파싱
+	chainlinkABI, err = abi.JSON(strings.NewReader(string(abiContent)))
 	if err != nil {
 		log.Fatalf("Failed to parse contract ABI: %v", err)
 	}
