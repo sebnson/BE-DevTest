@@ -24,7 +24,7 @@ func connectToDB() (*sql.DB, error) {
 	return db, nil
 }
 
-func saveTokenPrice(tokenSymbol string, chainlinkPrice, bitfinexPrice float64) error {
+func saveTokenPrice(tokenSymbol string, tokenPrice float64, source string) error {
 	db, err := connectToDB()
 	if err != nil {
 		return err
@@ -32,8 +32,8 @@ func saveTokenPrice(tokenSymbol string, chainlinkPrice, bitfinexPrice float64) e
 	defer db.Close()
 
 	// 데이터베이스에 토큰 가격 정보 저장
-	query := "INSERT INTO token_prices (symbol, chainlink_price, bitfinex_price, timestamp) VALUES (?, ?, ?, ?)"
-	_, err = db.Exec(query, tokenSymbol, chainlinkPrice, bitfinexPrice, time.Now())
+	query := "INSERT INTO token_prices (symbol, price, source) VALUES (?, ?, ?)"
+	_, err = db.Exec(query, tokenSymbol, tokenPrice, source, time.Now())
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,37 @@ func saveTokenPrice(tokenSymbol string, chainlinkPrice, bitfinexPrice float64) e
 	return nil
 }
 
-func getTokenPrice(tokenSymbol string) (float64, error) {
+func getTokenPrice(tokenSymbol string) (map[string]float64, error) {
+	db, err := connectToDB()
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+
+	// 토큰 가격 정보 조회
+	query := "SELECT source, price FROM token_prices WHERE symbol = ? GROUP BY source ORDER BY timestamp DESC LIMIT 1"
+	row, err := db.Query(query, tokenSymbol)
+	if err != nil {
+		return nil, err
+	}
+
+	var prices map[string]float64
+	for row.Next() {
+		var source string
+		var price float64
+		err = row.Scan(&source, &price)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil, fmt.Errorf("No token price found for the given token symbol")
+			}
+			return nil, err
+		}
+		prices[source] = price
+	}
+	return prices, nil
+}
+
+func getTokenPriceAndSource(tokenSymbol string, tokenSource string) (float64, error) {
 	db, err := connectToDB()
 	if err != nil {
 		return 0, err
@@ -49,8 +79,8 @@ func getTokenPrice(tokenSymbol string) (float64, error) {
 	defer db.Close()
 
 	// 토큰 가격 정보 조회
-	query := "SELECT price FROM token_prices WHERE symbol = ? ORDER BY timestamp DESC LIMIT 1"
-	row := db.QueryRow(query, tokenSymbol)
+	query := "SELECT price FROM token_prices WHERE symbol = ? AND source = ? ORDER BY timestamp DESC LIMIT 1"
+	row := db.QueryRow(query, tokenSymbol, tokenSource)
 
 	var price float64
 	err = row.Scan(&price)
@@ -60,7 +90,8 @@ func getTokenPrice(tokenSymbol string) (float64, error) {
 		}
 		return 0, err
 	}
-	return 0, nil
+
+	return price, nil
 }
 
 // 특정 시간 구간 동안의 평균 토큰 가격 정보 조회
