@@ -16,7 +16,7 @@ scheduler 함수를 호출하여 스케줄러를 시작하고, startAPIServer �
 ### api.go:
 HTTP API 서버를 구현한 부분으로, 엔드포인트(/token/price)로부터 토큰 심볼을 받아와 데이터베이스에서 해당 토큰의 가격 정보를 조회하고, JSON 형식으로 클라이언트에게 응답합니다.
 
-### contract.go: 
+### source.go: 
 Ethereum 블록체인에서 Chainlink 컨스랙트로부터 토큰 가격 정보를 조회합니다. getLatestTokenData 함수 호출 시 Ethereum 노드에 연결하여 Chainlink 컨트랙트의 latestRoundData 함수를 호출하여 토큰 가격 정보를 가져온 후, 토큰의 가격과 업데이트 시간을 반환합니다.
 
 ### databse.go:
