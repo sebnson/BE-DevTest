@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -51,12 +53,13 @@ func fetchDataAndSave() error {
 			log.Printf("Error fetching price from Chainlink: %v", err)
 			continue
 		}
+		fmt.Println("hi chainlinkPrice", chainlinkPrice)
+
 		err = saveTokenPrice(token, chainlinkPrice, "chainlink")
 		if err != nil {
 			log.Printf("Error saving price from Chainlink: %v", err)
 			continue
 		}
-
 	}
 	//  bitfinex에서 토큰 가격 정보 조회
 	for token, bitfinexToken := range bitfinexToken {
@@ -65,6 +68,8 @@ func fetchDataAndSave() error {
 			log.Printf("Error fetching price from bitfinex: %v", err)
 			continue
 		}
+		fmt.Println("hi chainlinkPrice", bitfinexPrice)
+
 		err = saveTokenPrice(token, bitfinexPrice, "bitfinex")
 		if err != nil {
 			log.Printf("Error saving price from bitfinex: %v", err)
@@ -92,7 +97,7 @@ func getChainlinkTokenData(address string) (float64, error) {
 		Data: data,
 	}
 
-	result, err := client.CallContract(nil, callMsg, nil)
+	result, err := client.CallContract(context.Background(), callMsg, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -134,8 +139,11 @@ func getBitfinexTokenData(bitfinexToken string) (float64, error) {
 
 func parseTokenPriceData(data []byte) (float64, int64, error) {
 	var roundData struct {
-		Answer    *big.Int
-		UpdatedAt *big.Int
+		RoundId         *big.Int
+		Answer          *big.Int
+		StartedAt       *big.Int
+		UpdatedAt       *big.Int
+		AnsweredInRound *big.Int
 	}
 
 	err = chainlinkABI.UnpackIntoInterface(&roundData, "latestRoundData", data)
